@@ -18,6 +18,11 @@ The output should show x,y coordinates in (mm) and the state of "touch" or "no t
 172.061, 115.167 - Touch</pre>
 
 ## Simulate Franka Panda Arm and Digital Twin
+Follow the instructions at the official website
+https://github.com/frankaemika/franka_ros2
+
+Run the rviz with 
+<pre>ros2 launch franka_fr3_moveit_config moveit.launch.py robot_ip:=dont-care use_fake_hardware:=true</pre>
 
 ## Video Feed Display
 
