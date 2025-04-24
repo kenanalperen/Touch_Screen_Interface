@@ -26,4 +26,8 @@ Run the rviz with
 
 ## Video Feed Display
 
+Start the camera feed node with
+
+<pre>ros2 launch realsense2_camera rs_launch.py</pre>
+
 ## Integration and Implementation with Impedance Controller
