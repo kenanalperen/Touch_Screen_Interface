@@ -26,8 +26,8 @@ Run the rviz with
 
 ## Video Feed Display
 
-Start the camera feed node with
+Start the pyhton code given by running
 
-<pre>ros2 launch realsense2_camera rs_launch.py</pre>
+<pre>python3 webcam_gui.py</pre>
 
 ## Integration and Implementation with Impedance Controller
