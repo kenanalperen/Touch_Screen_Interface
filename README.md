@@ -26,8 +26,8 @@ Run the rviz with
 
 ## Video Feed Display
 
-Start the pyhton code given by running
+Go to the folder including the moving_webcam_gui.py file and run the pyhton code by typing
 
-<pre>python3 webcam_gui.py</pre>
+<pre>python3 moving_webcam_gui.py</pre>
 
 ## Integration and Implementation with Impedance Controller
