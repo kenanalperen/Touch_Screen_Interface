@@ -6,7 +6,8 @@ import cv2
 import numpy as np
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout
 from PyQt5.QtGui import QImage, QPixmap, QCursor
-from PyQt5.QtCore import QTimer, QThread, pyqtSignal, QPoint
+from PyQt5.QtCore import QTimer, QThread, pyqtSignal, QPoint, Qt
+
 
 
 class CameraThread(QThread):
@@ -35,10 +36,12 @@ class CameraThread(QThread):
 class CameraFeed(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Live Camera Feed")
+        # self.setWindowTitle("Live Camera Feed")
+        self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
+
 
         self.image_label = QLabel()
-        self.image_label.setFixedSize(800, 600)
+        self.image_label.setFixedSize(1280, 960)
 
         layout = QVBoxLayout()
         layout.addWidget(self.image_label)
@@ -56,7 +59,7 @@ class CameraFeed(QWidget):
 
     def update_frame(self, frame):
         # Resize, then snip top 80px
-        frame = cv2.resize(frame, (800, 680))
+        frame = cv2.resize(frame, (self.image_label.width(), self.image_label.height() + 80))
         frame = frame[80:, :]
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -66,10 +69,10 @@ class CameraFeed(QWidget):
         self.image_label.setPixmap(QPixmap.fromImage(qt_image))
 
     def follow_mouse_fast(self):
-        target = QCursor.pos() - QPoint(self.width() // 2, self.height() // 2)
+        target = QCursor.pos() - QPoint(self.width() // 2, self.height()*3 // 4)
         current = self.pos()
 
-        speed = 0.4  # higher = faster follow (0.3–0.5 for responsive, up to 1.0 for instant)
+        speed = 1.0  # higher = faster follow (0.3–0.5 for responsive, up to 1.0 for instant)
 
         new_x = int(current.x() + speed * (target.x() - current.x()))
         new_y = int(current.y() + speed * (target.y() - current.y()))
