@@ -1,64 +1,67 @@
-<img src="https://github.com/user-attachments/assets/036008b6-ac72-4532-9da5-20636637d729" alt="Screenshot from 2025-06-09 13-45-44" width="70%">
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/036008b6-ac72-4532-9da5-20636637d729" alt="Screenshot from 2025-06-09 13-45-44" width="70%">
+</p>
 
-# Touch Screen Interface   
-This repository includes details regarding our communication channel and the ROS packages we utilised at the human-robot interface side. In Robot-Environment side we implemented a specialised impedance controller which is confidential to IIT.
+
+# Touch Screen Interface
+
+This repository includes details regarding our communication setup and the ROS packages we used on the human-robot interface side. On the robot-environment side, we implemented a specialised impedance controller, which is confidential to IIT.
 
 ## Communication Architecture
-![A4 - 1](https://github.com/user-attachments/assets/435dd327-e2c3-4714-8e34-f4fc2613139f)
 
-Above figure gives the overview of the communication architecture we utilised. There were 4 PCs involved during the remote teleoperation:
+![Communication Architecture](https://github.com/user-attachments/assets/435dd327-e2c3-4714-8e34-f4fc2613139f)
 
-PC1: [Bristol, UK] Used as the human-robot interface. It took finger position data of the users and displayed the camera feed coming from the robot.
-PC2: [Bristol, UK] Used for logging experiment data during the user studies.
+The figure above provides an overview of the communication architecture we used. Four PCs were involved in the remote teleoperation setup:
 
-PC3: [Genoa, Italy] Used for recieving position reference and converting into a PoseEstimate ros topic with timestamp adjusted to the robot.
-PC4: [Genoa, Italy] Used as the ROS Master to control the Franka Panda Arm. Had virtual boundaries and end effector velocity limits for safety.
+- **PC1 [Bristol, UK]:** Served as the human-robot interface. It collected finger position data from users and displayed the camera feed coming from the robot.
+- **PC2 [Bristol, UK]:** Used for logging experimental data during the user studies.
 
-For the Virtual Private Network (VPN), we used two different third party software, and the important thing is that all four PCs has to be in the same virtual network. After this communication, PCs act as if they are located in the same local network. For better internet speed we connected the PCs through wired internet rather than wi-fi connection.
+- **PC3 [Genoa, Italy]:** Received position reference data and converted it into a `PoseEstimate` ROS topic with a timestamp adjusted for the robot.
+- **PC4 [Genoa, Italy]:** Acted as the ROS Master to control the Franka Panda arm. It also enforced virtual boundaries and end-effector velocity limits for safety.
 
+The robot in Italy required the use of ROS1. Initially, we implemented ROS bridging in Bristol, UK to convert our code from ROS2 to ROS1 before sharing it, which was functional. However, it turned out to be easier to modify our code so that everything runs directly on ROS1.
+
+For the Virtual Private Network (VPN), we used two different third-party software tools. It is essential that all four PCs are connected to the same virtual network. Once connected, they behave as if they are on the same local network. To ensure better internet performance, we used wired connections instead of Wi-Fi.
 
 ## ROS Nodes
-https://github.com/user-attachments/assets/ef831d45-5722-4e35-8653-e6c80fcb0752
 
-Here we explain the python packages we used for the experiments at the operator side.
+https://github.com/user-attachments/assets/2bc98b0d-5b56-4d39-8313-eb77d4530146
 
-### Finger Position Tracker (mouse_publisher.py)
+Below are the Python packages we used on the operator side during the experiments:
 
-This python node takes finger position input from the users from a touch screen, converts pixel values to real life values (with scaling involved if requested), and publishes these reference positions for the robot.
+### Finger Position Tracker (`mouse_publisher.py`)
 
-The python code used can be found at the repository under mouse_publisher.py
+This Python node takes finger position input from a touchscreen, converts pixel coordinates to real-world values (with optional scaling), and publishes these reference positions to the robot.
 
-P.S. Make sure to select "Ubuntu on Xorg" in the settings on the Ubuntu login screen. The position tracker does not function properly with Wayland, it only works over web pages and not across the entire screen due to security restrictions.
+> **Note:** Ensure "Ubuntu on Xorg" is selected at the login screen. The position tracker does not work properly with Wayland, as it only captures inputs from web pages due to security restrictions.
 
-### Joystick Position Reference (joystick_control.py)
+### Joystick Position Reference (`joystick_control.py`)
 
-As a comparison to the novel kinterface, this python node takes joystick reference input from the users through a commercial joystick, which is the industry standard, converts analog joystick angle to real life velocity values, includes a scaling parameter to adjust end effector speed, and publishes these reference positions for the robot.
+This node provides a baseline comparison to our novel interface. It takes input from a commercial joystick—an industry-standard device—converts the joystick angle into velocity values, and applies a scaling factor to adjust the end-effector speed before publishing the reference positions to the robot.
 
-The python code used can be found at the repository under joystick_control.py
+### Camera Angle Calibration (`calibrate_angle.py`)
 
-### Calibrating angle of camera feed (calibrate_angle.py)
+This node adjusts the angled video feed received from Italy into a top-down view resembling a coordinate frame. Users are asked to click on the four corners of the workspace and the initial end-effector position to calibrate the GUI.
 
-This node is used to wrap the video feed sent from Italy, which has an angle, to a top-view that looks like coordinate frame. In this node you click on four corners of your workspace and your initial end effector position to give reference values for the gui interface.
+The corresponding Python script is available as `calibrate_angle.py`.
 
-The python code used can be found at the repository under calibrate_angle.py
-
-![image](https://github.com/user-attachments/assets/86dfdff6-8219-4c5f-b4ac-c12381f2dfc2)
-
-### GUI (new_display.py)
-
-This node is used for visualising the camera feed with robot end effector position highlighted and leaves a mark at the previous positions. It is a scaled donw version of the actual workspace. It requires a video feed input.
-
-The python code used can be found at the repository under new_display.py
+<img src="https://github.com/user-attachments/assets/86dfdff6-8219-4c5f-b4ac-c12381f2dfc2" alt="Calibration Screenshot" width="50%">
 
 
-### Converting MATLAB generated trajectories to ROS topics (path_generator.mlx) and (mat_to_rosbag.py)
+### GUI Interface (`new_display.py`)
 
-Automated trajectories are generated through a MATLAB code as a timeseries data, which you can adjust path parameters as well as initial wait time and end effector velocity using path_generator.mlx
+This node visualises the video feed along with the robot's end-effector position, which is highlighted and leaves a trail of previous positions. The display is a scaled-down version of the actual workspace and requires a video stream as input.
 
-These trajectory.mat files are converted into ROS Topics and recorded into rosbag.bag files using the mat_to_rosbag.py node.
+The script is located at `new_display.py`.
 
-As an example sinusoid_trajectory.mat and sinusoid_trajectory.bag files are atached to the repository, which when the .bag file is played, sends POseEstimate reference to the robot with defined parameters.
+### Converting MATLAB Trajectories to ROS Topics (`path_generator.mlx` & `mat_to_rosbag.py`)
 
+Automated trajectories are generated using a MATLAB script (`path_generator.mlx`) as time series data. Users can configure path parameters, initial delay, and end-effector velocity.
+
+These `.mat` files are then converted into ROS topics and recorded as `.bag` files using `mat_to_rosbag.py`.
+
+Example files such as `sinusoid_trajectory.mat` and `sinusoid_trajectory.bag` are included in the repository. Playing the `.bag` file sends the defined `PoseEstimate` reference commands to the robot.
 
 ## Participant Invitation Poster
-![image](https://github.com/user-attachments/assets/2429c645-1fe3-48eb-a894-443f50704196)
+![repository_Pic](https://github.com/user-attachments/assets/6a3f10e3-d321-4b91-9de9-61e257e41566)
+
