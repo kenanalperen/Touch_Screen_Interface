@@ -1,75 +1,123 @@
-import math
-from pynput.mouse import Controller
-from geometry_msgs.msg import Point
-import rclpy
-from rclpy.node import Node
+#!/usr/bin/env python3
 
-class MousePublisher(Node):
+import math
+import rospy
+from geometry_msgs.msg import PoseStamped, Quaternion
+from pynput.mouse import Controller
+
+class MousePublisher:
     def __init__(self):
-        super().__init__('mouse_publisher')
-        self.publisher_ = self.create_publisher(Point, 'mouse_position', 10)
+        rospy.init_node('mouse_publisher', anonymous=True)
+
+        self.pub = rospy.Publisher('/mouse_position', PoseStamped, queue_size=10)
         self.mouse = Controller()
         self.last_mm_position = None
-        self.inactive_counter = 999  # Force initial state to be "No touch"
-        self.inactive_threshold = 10  # Number of cycles (0.1s each)
-        self.movement_threshold_mm = 0.001  # Minimum movement to count as touch
-        timer_period = 0.1
-        self.timer = self.create_timer(timer_period, self.publish_mouse_position)
-        print("Mouse Publisher started.")
+        self.inactive_counter = 999
+        self.inactive_threshold = 10
+        self.movement_threshold_mm = 0.001
 
-    def publish_mouse_position(self):
-        try:
-            x, y = self.mouse.position
+        self.rate = rospy.Rate(10)  # 10 Hz
 
-            # Screen resolution: 3840x2160, 13.3" diagonal
-            screen_width = 3840
-            screen_height = 2160
-            screen_diagonal_inches = 13.3
-            diagonal_pixels = math.sqrt(screen_width**2 + screen_height**2)
-            ppi = diagonal_pixels / screen_diagonal_inches
+        # Screen parameters
+        self.screen_width = 3840
+        self.screen_height = 2160
+        self.screen_diagonal_inches = 13
+        diagonal_pixels = math.sqrt(self.screen_width**2 + self.screen_height**2)
+        self.ppi = diagonal_pixels / self.screen_diagonal_inches
 
-            # Convert to mm
-            x_mm = (x / ppi) * 25.4
-            y_mm = (y / ppi) * 25.4
+        # EE subscriber state
+        self.ee_xy = None
+        rospy.Subscriber('/ee_for_paris', PoseStamped, self.ee_callback)
 
-            # Detect small movements in mm
-            if self.last_mm_position is not None:
-                dx = abs(x_mm - self.last_mm_position[0])
-                dy = abs(y_mm - self.last_mm_position[1])
-                if dx > self.movement_threshold_mm or dy > self.movement_threshold_mm:
-                    self.inactive_counter = 0
+        rospy.loginfo("Mouse Publisher (ROS 1) started.")
+
+    def ee_callback(self, msg):
+        x_adj = msg.pose.position.x
+        y_adj = msg.pose.position.y
+
+        # Convert to mm and apply offsets
+        x_mm = x_adj * 1000.0 - 355.742
+        y_mm = y_adj * 1000.0 - 404.941
+
+        self.ee_xy = (x_mm, y_mm)
+
+    def clamp(self, value, min_val, max_val):
+        return max(min(value, max_val), min_val)
+
+    def run(self):
+        while not rospy.is_shutdown():
+            try:
+                y, x = self.mouse.position  # this swap is intentional
+
+                # Convert mouse to mm
+                x_mm = ((x / self.ppi) * 25.4 - 112.120 + 1.20) * 950.0 / 205.0
+                y_mm = ((y / self.ppi) * 25.4 - 216.520 - 0.674) * 950.0 / 205.0
+
+                # Clamp mouse position
+                clamped_x_mm = self.clamp(x_mm, -90, 190)
+                clamped_y_mm = self.clamp(y_mm, -720, 0)
+
+                # Echo clamped mouse position
+                print(f"Mouse: x = {clamped_x_mm:.3f}, y = {clamped_y_mm:.3f}")
+
+                # Track activity
+                if self.last_mm_position is not None:
+                    dx = abs(x_mm - self.last_mm_position[0])
+                    dy = abs(y_mm - self.last_mm_position[1])
+                    if dx > self.movement_threshold_mm or dy > self.movement_threshold_mm:
+                        self.inactive_counter = 0
+                    else:
+                        self.inactive_counter += 1
                 else:
                     self.inactive_counter += 1
-            else:
-                # First reading: don't immediately say "Touch"
-                self.inactive_counter += 1
 
-            self.last_mm_position = (x_mm, y_mm)
+                self.last_mm_position = (x_mm, y_mm)
 
-            # Publish
-            point = Point()
-            point.x = x_mm
-            point.y = y_mm
-            point.z = 0.0
-            self.publisher_.publish(point)
+                # Determine publish position
+                if self.ee_xy is not None:
+                    print(f"EE:    x = {self.ee_xy[0]:.3f}, y = {self.ee_xy[1]:.3f}")
 
-            # Print with 3-digit precision
-            touch_state = "Touch" if self.inactive_counter < self.inactive_threshold else "No touch"
-            print(f"{x_mm:.3f}, {y_mm:.3f} - {touch_state}")
+                    dx = clamped_x_mm - self.ee_xy[0]
+                    dy = clamped_y_mm - self.ee_xy[1]
+                    distance = math.sqrt(dx ** 2 + dy ** 2)
 
-        except Exception as e:
-            print(f"Error getting mouse position: {e}")
+                    if distance < 100:
+                        print(f"CLOSE TO EE: Mouse ({clamped_x_mm:.3f}, {clamped_y_mm:.3f})")
+                        publish_x, publish_y = clamped_x_mm, clamped_y_mm
+                    else:
+                        print(f"FAR FROM EE: EE ({self.ee_xy[0]:.3f}, {self.ee_xy[1]:.3f})")
+                        publish_x, publish_y = self.ee_xy[0], self.ee_xy[1]
 
-def main(args=None):
-    rclpy.init(args=args)
-    node = MousePublisher()
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
+                else:
+                    print("EE:    No signal yet.")
+                    publish_x, publish_y = 0.0, 0.0
+
+
+                    
+
+                z_value = 0.0  # No touch logic
+
+                pose_stamped = PoseStamped()
+                pose_stamped.header.stamp = rospy.Time.now()
+                pose_stamped.header.frame_id = "world"
+
+                pose_stamped.pose.position.x = publish_x
+                pose_stamped.pose.position.y = publish_y
+                pose_stamped.pose.position.z = z_value
+
+                pose_stamped.pose.orientation = Quaternion(0.0, 1.0, 0.0, 0.0)
+
+                self.pub.publish(pose_stamped)
+
+                print("-" * 40)
+                self.rate.sleep()
+
+            except Exception as e:
+                rospy.logerr(f"Error getting mouse position: {e}")
 
 if __name__ == '__main__':
-    main()
+    try:
+        node = MousePublisher()
+        node.run()
+    except rospy.ROSInterruptException:
+        pass
