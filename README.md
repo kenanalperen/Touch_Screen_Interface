@@ -1,4 +1,4 @@
-
+![Screenshot from 2025-06-09 13-45-44](https://github.com/user-attachments/assets/036008b6-ac72-4532-9da5-20636637d729)
 <p align="center"><img src="https://github.com/user-attachments/assets/acbb23e4-441a-4693-88fc-804b2b04fbce" /></p> 
 
 # Touch Screen Interface   
