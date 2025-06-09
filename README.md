@@ -1,7 +1,4 @@
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/036008b6-ac72-4532-9da5-20636637d729" alt="Screenshot from 2025-06-09 13-45-44" width="70%">
-</p>
-
+https://github.com/user-attachments/assets/b50bf9f4-389a-429d-b359-0f8dd04b2854
 
 # Touch Screen Interface
 
@@ -24,8 +21,6 @@ The robot in Italy required the use of ROS1. Initially, we implemented ROS bridg
 For the Virtual Private Network (VPN), we used two different third-party software tools. It is essential that all four PCs are connected to the same virtual network. Once connected, they behave as if they are on the same local network. To ensure better internet performance, we used wired connections instead of Wi-Fi.
 
 ## ROS Nodes
-
-https://github.com/user-attachments/assets/2bc98b0d-5b56-4d39-8313-eb77d4530146
 
 Below are the Python packages we used on the operator side during the experiments:
 
@@ -53,6 +48,11 @@ The corresponding Python script is available as `calibrate_angle.py`.
 This node visualises the video feed along with the robot's end-effector position, which is highlighted and leaves a trail of previous positions. The display is a scaled-down version of the actual workspace and requires a video stream as input.
 
 The script is located at `new_display.py`.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/036008b6-ac72-4532-9da5-20636637d729" alt="Screenshot from 2025-06-09 13-45-44" width="70%">
+</p>
+
 
 ### Converting MATLAB Trajectories to ROS Topics (`path_generator.mlx` & `mat_to_rosbag.py`)
 
