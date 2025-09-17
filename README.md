@@ -28,11 +28,15 @@ Below are the Python packages we used on the operator side during the experiment
 
 This Python node takes finger position input from a touchscreen, converts pixel coordinates to real-world values (with optional scaling), and publishes these reference positions to the robot.
 
+Run the package using `rosrun mouse_publisher mouse_publisher.py`
+
 > **Note:** Ensure "Ubuntu on Xorg" is selected at the login screen. The position tracker does not work properly with Wayland, as it only captures inputs from web pages due to security restrictions.
 
 ### Joystick Position Reference (`joystick_control.py`)
 
 This node provides a baseline comparison to our novel interface. It takes input from a commercial joystick—an industry-standard device—converts the joystick angle into velocity values, and applies a scaling factor to adjust the end-effector speed before publishing the reference positions to the robot.
+
+Run the package using `rosrun mouse_publisher mouse_publisher.py`
 
 ### Camera Angle Calibration (`calibrate_angle.py`)
 
@@ -47,7 +51,7 @@ The corresponding Python script is available as `calibrate_angle.py`.
 
 This node visualises the video feed along with the robot's end-effector position, which is highlighted and leaves a trail of previous positions. The display is a scaled-down version of the actual workspace and requires a video stream as input.
 
-The script is located at `new_display.py`.
+Run the package using `rosrun mouse_publisher new_display.py`.
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/036008b6-ac72-4532-9da5-20636637d729" alt="Screenshot from 2025-06-09 13-45-44" width="70%">
